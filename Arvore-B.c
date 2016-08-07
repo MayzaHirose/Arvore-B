@@ -17,16 +17,16 @@ enum boolean {
 typedef enum boolean bool;
 
 struct raizArvore {
-	short raizArvore;
+	short RRNraiz;
 };
 
 typedef struct raizArvore raiz;
 
 struct paginaArvore {
-	short key_count;
-	char keys[MAX_KEYS];
-	short offsets[MAX_KEYS];
-	short child[ORDEM_PAG];
+	short key_count; //quantidade de chaves que estao na pagina
+	short keys[MAX_KEYS];//chaves da pagina
+	short offsets[MAX_KEYS];//o byte offset da chave no arquivo de registro
+	short child[ORDEM_PAG];//rrns dos filhos
 };
 
 typedef struct paginaArvore pagina;
@@ -49,14 +49,20 @@ int main(){
 	char filename[20], strCampo[256], strBuffer[512]; // Strings
 	char* token; //Armazena parte de string ao utilizar strtok
 
-
+	short rrnAtual;
+	char key[2];
+	short foundRRN;
+	int foundPos;
+	bool encontrado;
+	short rrnCount = 0;
 	
 	
 	pagina p;
+	raiz r;
 	p.child[0] = 1;
 	p.keys[0] = 1;
 	p.key_count = 1;
-	p.rrn[0] = 1;	
+	p.offsets[0] = 1;	
 	
 	printf("CHILD = %d", p.child[0]);
 
@@ -105,12 +111,15 @@ int main(){
 	    			printf("*ERRO!");
 	    			break;
 				}else{
-					printf("*Arvore-B criada!*");}
+					printf("\n\n*Arvore-B criada!*");}
 					
-				raiz.raizArvore = -1;					
-				fwrite(&raiz.raizArvore, sizeof(raiz.raizArvore), 1, arqArvore);
+				r.RRNraiz = -1;					
+				fwrite(&r.RRNraiz, sizeof(r.RRNraiz), 1, arqArvore);
 				rewind(arqArvore);
-				buscaChave()
+				fread(&rrnAtual, sizeof(rrnAtual), 1, arqArvore);
+				//encontrado = buscaChave(rrnAtual, key, foundRRN, foundPos);
+				
+				
 					
 				/*Faz a importação dos dados do catalogo para o arquivo de registro com os devidos ajustes*/
 				field_length = obterCampos(arqCat, strCampo, &contadorReg);
@@ -121,11 +130,16 @@ int main(){
 				
     			while(field_length > 0){
 			        campo ++;
-			        printf("\nCampo #%i = %s", campo, strCampo);
+			        //printf("\nCampo #%i = %s", campo, strCampo); 
 			        strCampo[0] = '\0';
 
 			        if(!(campo % 5) ){
+			        	rrnCount++;
+			        	key[0] = strBuffer[0];
+						key[1] = strBuffer[1];
+						 
 				        tamanhoRegistro = strlen(strBuffer);
+				        
 				        fwrite(&tamanhoRegistro, sizeof(tamanhoRegistro), 1, arqReg);
 				        fwrite(strBuffer, tamanhoRegistro, 1, arqReg);
 				        strBuffer[0] = '\0';
@@ -224,19 +238,48 @@ void receberDados(char* strBuffer){
     strcat(strBuffer,"|");
 }
 
-bool buscaChave(short rrnAtual, char key, short foundRRN, bool foundPos){
+/*bool buscaChave(short* rrnAtual, short* key, short* foundRRN, int* foundPos){
+	int i;
 	pagina page;
+	short pos;
+	bool match;
 	
-	if(rrnAtual == -1){
+	if(&rrnAtual == -1){
 		return false;
 	}
 	else{
 		fread(&page.key_count, sizeof(page.key_count), 1, arqArvore);
-		for(int i=0, i<)
-		fread(&page.keys[i], sizeof(page.keys[i]), 1, arqArvore);
-		for(int i=0, i<ORDEM_PAGINA, i++){		
+		
+		for(i=0, i<MAX_KEYS, i++){
+			fread(&page.keys[i], sizeof(page.keys[i]), 1, arqArvore);
+		}
+		for(i=0, i<MAX_KEYS, i++){
+			fread(&page.offsets[i], sizeof(page.offsets[i]), 1, arqArvore);
+		}
+		for(i=0, i<ORDEM_PAGINA, i++){		
 			fread(&page.child[1], sizeof(page.child[i]), 1, arqArvore);
 		}
 		
+		for(i=0, i<MAX_KEYS, i++){
+			if(page.keys[i] == key){
+				match = true;
+				pos = i;
+			} else if(page.keys[i] > key){
+				pos = i;
+			} else if(page.keys[i] < key && page.keys[i+1] > key){
+				pos = i+1;
+			}
+			
+		}
+		if(match){
+				foundRRN = rrnAtual;
+				foundPos = pos;
+			}
+			else{
+				
+			}		
 	}
-}
+	
+}*/
+
+void insereChave()

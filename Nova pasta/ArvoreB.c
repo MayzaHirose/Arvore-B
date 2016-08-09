@@ -252,13 +252,13 @@ void receberDados(char* strBuffer){
 
 
 
-bool insereChave(FILE * arqArvore, int id2, short byteoffset, short aux){
+bool insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 	int i;
-	short filhoQuero;
-	pagina *p2 = malloc(sizeof(pagina));
+	//short filhoQuero;
+	pagina *p = malloc(sizeof(pagina));
 	
-	if(aux == -2){
-			pagina *p = malloc(sizeof(pagina));
+	if(filhoQuero == -2){
+			//pagina *p = malloc(sizeof(pagina));
 						
 			//inicializa pagina
 			p->rrn = rrnCount;
@@ -269,6 +269,7 @@ bool insereChave(FILE * arqArvore, int id2, short byteoffset, short aux){
 				p->child[i] = -1;
 			}
 			p->child[4] = -1;
+			//fim inicializacao
 			
 			p->qtdKeys++;
 			p->keys[0].key = id2;
@@ -280,27 +281,40 @@ bool insereChave(FILE * arqArvore, int id2, short byteoffset, short aux){
 			//rewind(arqArvore);
 			//fread(p2, sizeof(pagina), 1, arqArvore);
 		rrnCount++;	
-		} else{
+	} else{
 			//preciso fazer uma busca
 			rewind(arqArvore);
-			fread(p2, sizeof(pagina), 1, arqArvore);
-			//encontrei uma folha
-			if(aux == -1){							
-				if(p2->qtdKeys != MAX_KEYS){
+			fseek(arqArvore, (filhoQuero-1)*sizeof(pagina), SEEK_SET);
+			fread(p, sizeof(pagina), 1, arqArvore);
+			//pego a posição q a chave deveria estar
+			for(i=0;i<p->qtdKeys;i++){
+							if(p->keys[i].key > id2){
+								filhoQuero = p->child[i];
+								break;
+							} else{
+								filhoQuero = p->child[i+1];
+							}
+			}
+			
+			//se o lugar onde eu deveria estar ainda nao ta apontando
+			if(filhoQuero == -1){	
+				//verifico se a pagina tem lugar sobrando			
+				if(p->qtdKeys != MAX_KEYS){
 					for(i=0;i<MAX_KEYS;i++){
-						if(p2->keys[i].key == -1){
-							p2->qtdKeys++;
-							p2->keys[i].key = id2;
-							p2->keys[i].byteoffset = byteoffset;
-							ordenaChaves(p2);
+						//encontro lugar em branco
+						if(p->keys[i].key == -1){
+							p->qtdKeys++;
+							p->keys[i].key = id2;
+							p->keys[i].byteoffset = byteoffset;
+							ordenaChaves(p);
 							rewind(arqArvore);
-							fwrite(p2, sizeof(pagina), 1, arqArvore);
+							fwrite(p, sizeof(pagina), 1, arqArvore);
 							break;
 						}
 					}
-					//tem q dividir a pagina etc
+				//se não tenho q dividir a pagina etc
 				} else{				
-						for(i=0;i<MAX_KEYS;i++){
+					/*	for(i=0;i<MAX_KEYS;i++){
 							if(p2->keys[i].key > id2){
 								filhoQuero = p2->child[i];
 								break;
@@ -309,15 +323,17 @@ bool insereChave(FILE * arqArvore, int id2, short byteoffset, short aux){
 							}
 						}
 						//pagina *p3 = malloc(sizeof(pagina));
-						insereChave(arqArvore, id2, byteoffset, filhoQuero);		
+						insereChave(arqArvore, id2, byteoffset, filhoQuero);*/		
 				}
+				
 			} else{
 				insereChave(arqArvore, id2, byteoffset, filhoQuero);
 			}
-		}
-		for(i=0;i<MAX_KEYS;i++){
-			printf("\n\nrrnpagina = %d, quantdKey = %i, \nkey = %i \nbyteoffset = %d \nfilha numero %i = %d", p2->rrn, p2->qtdKeys, p2->keys[i].key, p2->keys[i].byteoffset,i, p2->child[i]);
-		}
+	}
+	for(i=0;i<MAX_KEYS;i++){
+		printf("\n\nrrnpagina = %d, quantdKey = %i, \nkey = %i \nbyteoffset = %d \nfilha numero %i = %d", p->rrn, p->qtdKeys, p->keys[i].key, p->keys[i].byteoffset,i, p->child[i]);
+		getch();
+	}
 	
 }
 
@@ -357,6 +373,7 @@ void criaArvore(FILE* arqReg, FILE* arqArvore){
 	int id2;
 	short byteoffset = 0;
 	short aux =0;
+	
 	
 	//short filhoQuero;
 	

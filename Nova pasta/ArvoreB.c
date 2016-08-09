@@ -50,6 +50,7 @@ void ordenaChavesAux(paginaAuxiliar *p);
 
 short raiz = -2;
 short rrnCount = 1;
+short rrnraiz = -2;
 	
 int main(){
 	
@@ -290,6 +291,8 @@ bool insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 			
 			rewind(arqArvore);
 			fwrite(p, sizeof(pagina), 1, arqArvore);
+			rewind(arqArvore);
+			fread(&rrnraiz, sizeof(raiz) ,1, arqArvore);
 						
 			//rewind(arqArvore);
 			//fread(p2, sizeof(pagina), 1, arqArvore);
@@ -416,7 +419,8 @@ bool insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 						
 						//p->child[rrnChild] = nova->rrn;
 					//}
-					rrnCount++;					
+					rrnCount++;	
+					rrnraiz=novaRaiz->rrn;				
 				}
 				
 			} else{
@@ -497,8 +501,8 @@ void criaArvore(FILE* arqReg, FILE* arqArvore){
 	short aux =0;
 	int i;
 
-	rewind(arqArvore);
-	fwrite(&raiz, sizeof(raiz), 1, arqArvore);
+	//rewind(arqArvore);
+	//fwrite(&raiz, sizeof(raiz), 1, arqArvore);
 	rewind(arqReg);
 	rec_length = obterRegistro(arqReg, strBuffer);
 
@@ -510,7 +514,8 @@ void criaArvore(FILE* arqReg, FILE* arqArvore){
 		rewind(arqArvore);
 		fread(&aux, sizeof(raiz) ,1, arqArvore);
 		
-		insereChave(arqArvore, id2, byteoffset, aux);
+		//insereChave(arqArvore, id2, byteoffset, aux);
+		insereChave(arqArvore, id2, byteoffset, rrnraiz);
 			
 		rec_length = obterRegistro(arqReg, strBuffer);
 		byteoffset = byteoffset + rec_length;	

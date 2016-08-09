@@ -315,6 +315,8 @@ void criaArvore(FILE* arqReg, FILE* arqArvore){
 	short byteoffset = 0;
 	short aux =0;
 	
+	short filhoQuero;
+	
 	int i;
 
 	rewind(arqArvore);
@@ -365,16 +367,31 @@ void criaArvore(FILE* arqReg, FILE* arqArvore){
 		} else{
 			rewind(arqArvore);
 			fread(p2, sizeof(pagina), 1, arqArvore);
-			for(i=0;i<MAX_KEYS;i++){
-				if(p2->keys[i].key == -1){
-					p2->qtdKeys++;
-					p2->keys[i].key = id2;
-					p2->keys[i].byteoffset = byteoffset;
-					ordenaChaves(p2);
-					rewind(arqArvore);
-					fwrite(p2, sizeof(pagina), 1, arqArvore);
-					break;
+			if(p2->qtdKeys != MAX_KEYS){
+				for(i=0;i<MAX_KEYS;i++){
+					if(p2->keys[i].key == -1){
+						p2->qtdKeys++;
+						p2->keys[i].key = id2;
+						p2->keys[i].byteoffset = byteoffset;
+						ordenaChaves(p2);
+						rewind(arqArvore);
+						fwrite(p2, sizeof(pagina), 1, arqArvore);
+						break;
+					}
 				}
+				//tem q dividir a pagina etc
+			} else{
+				//while(p2->qtdKeys == MAX_KEYS){
+					for(i=0;i<MAX_KEYS;i++){
+						if(p2->keys[i].key > id2){
+							filhoQuero = p2->child[i];
+							break;
+						} else{
+							filhoQuero = p2->child[i+1];
+						}
+					}
+					//pagina 
+				//}
 			}
 			
 		}

@@ -330,7 +330,7 @@ bool insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 				//se não tenho q dividir a pagina etc
 				} else{	
 					//enquanto divisao
-					while(divisao){	
+					//while(divisao){	
 					//gambi basica
 						paginaAuxiliar *aux = malloc(sizeof(paginaAuxiliar));
 						aux->keys[0].key = p->keys[0].key;
@@ -350,7 +350,7 @@ bool insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 						for(i=0; i<MAX_KEYS+1; i++){	
 							aux->child[i] = -1;
 						}
-						ordenaChaves(aux);
+						ordenaChavesAux(aux);
 						
 						pagina *nova = malloc(sizeof(pagina));
 						pagina *novaRaiz = malloc(sizeof(pagina));
@@ -370,23 +370,31 @@ bool insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 							nova->keys[i].key = -1;
 							nova->keys[i].byteoffset = -1;
 							nova->child[i] = -1;
-							nova->child[i+1] = -1;
 
 							novaRaiz->keys[i].key = -1;
 							novaRaiz->keys[i].byteoffset = -1;
 							novaRaiz->child[i] = -1;
-							novaRaiz->child[i+1] = -1;
+							
 						}
+						nova->child[4] = -1;
+						novaRaiz->child[4] = -1;
 						//fim inicializa
 						
 						//seta valores
 						p->qtdKeys--;
 						p->qtdKeys--;
+						
+						p->keys[2].key = -1;
+						p->keys[3].key = -1;
+						p->keys[2].byteoffset = -1;
+						p->keys[3].byteoffset = -1;
+						
 						p->keys[0].key = aux->keys[0].key;
 						p->keys[1].key = aux->keys[1].key;
 						p->keys[0].byteoffset = aux->keys[0].byteoffset;
 						p->keys[1].byteoffset = aux->keys[1].byteoffset;
 						
+												
 						nova->qtdKeys++;
 						nova->qtdKeys++;
 						nova->keys[0].key = aux->keys[3].key;
@@ -407,7 +415,7 @@ bool insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 						fwrite(novaRaiz, sizeof(pagina), 1, arqArvore);
 						
 						//p->child[rrnChild] = nova->rrn;
-					}
+					//}
 					rrnCount++;					
 				}
 				

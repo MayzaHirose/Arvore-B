@@ -494,7 +494,6 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 							rrnraiz=novaRaiz->rrn;
 							promocao = false;
 						} else {
-							printf("TA ENTRANDO NA PROMOCAO PRO PAI");
 							rewind(arqArvore);
 							fseek(arqArvore, (p->pai-1)*sizeof(pagina), SEEK_SET);
 							pagina* auxPai = malloc(sizeof(pagina));

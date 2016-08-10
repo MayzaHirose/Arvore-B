@@ -286,7 +286,6 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 	//short filhoQuero;
 	pagina *p = malloc(sizeof(pagina));
 	if(filhoQuero == -2){
-		printf("inserindo na primeira pagina");
 			//pagina *p = malloc(sizeof(pagina));
 						
 			//inicializa pagina
@@ -353,12 +352,10 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 			
 			//se o lugar onde eu deveria estar ainda nao ta apontando
 			if(filhoQuero == -1){	
-			printf("filho quero nao existe");
 			//printf("ultimo filho quero = %d ", filhoQuero);
 			//getch();
 				//verifico se a pagina tem lugar sobrando			
 				if(p->qtdKeys != MAX_KEYS){
-					printf("tem lugar");
 					for(i=0;i<MAX_KEYS;i++){
 						//encontro lugar em branco
 						if(p->keys[i].key == -1){
@@ -392,7 +389,6 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 					}
 				//se não tenho q dividir a pagina etc
 				} else{	
-					printf("tem q promover");
 					//pego e junto a pagina com a chave q eu preciso e vejo se tem q romover ou criar nova raiz
 					promocao = true;
 					
@@ -457,7 +453,6 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 						//if(pagAtual == 1 || pagAtual == rrnraiz){
 						//se o pai nao existe, crio um novo pai
 						if(p->pai == -2 ){
-							printf("nova raiz");
 							//if(p->rrn == rrnraiz)				
 							pagina *novaRaiz = malloc(sizeof(pagina));
 							//paginaAuxiliar *aux = malloc(sizeof(paginaAuxiliar));
@@ -499,7 +494,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 							rrnraiz=novaRaiz->rrn;
 							promocao = false;
 						} else {
-							printf("TA ENTRANDO ONDE NAO DEVE");
+							printf("TA ENTRANDO NA PROMOCAO PRO PAI");
 							rewind(arqArvore);
 							fseek(arqArvore, (p->pai-1)*sizeof(pagina), SEEK_SET);
 							pagina* auxPai = malloc(sizeof(pagina));
@@ -511,20 +506,26 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 										auxPai->qtdKeys++;
 										auxPai->keys[i].key = promoteKey;
 										auxPai->keys[i].byteoffset = promoteByte;
+										auxPai->child[i] = p->rrn;
+										auxPai->child[i+1] = nova->rrn;
 										ordenaChaves(auxPai);
 										
 										rewind(arqArvore);
 										fseek(arqArvore, (p->pai-1)*sizeof(pagina), SEEK_SET);
 										fwrite(auxPai, sizeof(pagina), 1, arqArvore);
-										//rewind(arqArvore);
 										
-										//fwrite(p, sizeof(pagina), 1, arqArvore);
-										//fwrite(nova, sizeof(pagina), 1, arqArvore);
+										p->pai = auxPai->rrn;
+										nova->pai = auxPai->rrn;
+										
+										rewind(arqArvore);
+										fseek(arqArvore, (p->rrn-1)*sizeof(pagina), SEEK_SET);										
+										fwrite(p, sizeof(pagina), 1, arqArvore);
+										fseek(arqArvore, 0, SEEK_END);
+										fwrite(nova, sizeof(pagina), 1, arqArvore);
 										break;
 										//return;
 									}
 								}
-								printf("saiu do if");
 								promocao = false;
 							}
 							
@@ -534,7 +535,6 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 				
 				
 			} else{
-				printf("TA NA RECURSIVIDADE");
 				insereChave(arqArvore, id2, byteoffset, filhoQuero);				
 			}
 	}
@@ -548,7 +548,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 
 void ordenaChaves(pagina *p){
 	int i, j, aux;
-	short auxbyteoffset;
+	short auxbyteoffset, auxChild;
 	int valores[p->qtdKeys];
 	
 	for(i=0;i<p->qtdKeys;i++){
@@ -561,9 +561,14 @@ void ordenaChaves(pagina *p){
                   aux = valores[j];
                   valores[j] = valores[j - 1];
                   valores[j - 1] = aux;
+                  
                   auxbyteoffset = p->keys[j].byteoffset;
                   p->keys[j].byteoffset = p->keys[j - 1].byteoffset;
                   p->keys[j -1].byteoffset = auxbyteoffset;
+                  
+                  auxChild = p->child[j];
+                  p->child[j] = p->child[j - 1];
+                  p->child[j -1] = auxChild;
                   
                   j--;
                   

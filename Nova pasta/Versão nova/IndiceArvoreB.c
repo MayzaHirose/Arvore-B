@@ -5,21 +5,16 @@
 
 #define ORDEM_PAG 5
 #define MAX_KEYS 4
-#define TAM_PAG 
-#define MIN_KEYS_PAG 3
-#define MIN_KEYS_FOLHA 2
 
 enum boolean {
     true = 1, false = 0
 };
-
 typedef enum boolean bool;
 
 //Interfaces das Funções
 int obterCampos(FILE* arqCat, char* strCampo, int* reg);
 short obterRegistro(FILE* arqReg, char* strBuffer);
 void receberDados(char* strBuffer);
-
 
 typedef struct {
 	int key;
@@ -40,20 +35,16 @@ typedef struct {
 	int qtdKeys;
 }paginaAuxiliar;
 
-
-//void inicializaPagina(pagina* p);
-//bool insereChave(FILE * arqArvore, char* id, short byteoffset);
 void criaArvore(FILE* arqReg, FILE* arqArvore);
 void ordenaChaves(pagina *p);
 void ordenaChavesAux(paginaAuxiliar *p);
 short buscaRegistro(FILE* arqArvore, int id, short filho);
 void listaRegistro(FILE* arqReg, short offset);
 
-
 short raiz = -2;
 short rrnCount = 1;
 short rrnraiz = -2;
-	
+
 int main(){
 	
 	//Variáveis comuns
@@ -66,34 +57,16 @@ int main(){
 	char filename[20], strCampo[256], strBuffer[512]; // Strings
 	char* token; //Armazena parte de string ao utilizar strtok
 
-	//Variáveis para manutenção da LED
-	short LED = -1; //LED com valor inicial
-	short byteOffset = 0; //Armazena o byte de início do registro removido
-	short tamanhoLED; //Armazena o tamanho do registro apontado pela LED
-	short tamanhoByte; //Armazena o tamanho do registro apontado pelo byteoffset
-	short valorApontado; //Valor do byteoffset visitado
-	short sobra; //Armazena a sobra do registro quando inserimos um registro menor no espaço
-	short LEDatual;//Armazena o valor da LED que esta sendo verificada 
-	short aux;
-	
-	/*char testec[2];
-	testec[0] = '1';
-	testec[1] = '0';
-	int teste;
-	teste = atoi(testec);*/
-	
-
 	//Variáveis da Busca Sequencial para procurar o registro a ser removido
 	char searchKey[2]; //ID a ser removido
 	int searchKey2;
 	short offset;
 	//char* id; //ID do registro a ser comparado com o procurado
-	bool matched = false; //Armazena o estado da procura
 	
 	FILE* arqCat;
 	FILE* arqReg;
 	FILE* arqArvore;
-
+	
 	do{
 
 		printf("\n\n           ---------------------------------------------------\n");
@@ -179,8 +152,6 @@ int main(){
 			break;
 			
 			case 3:
-				
-				matched = false;
 	        	printf("\nQual o ID procurado?: ");
 	        	//gets(searchKey);
 	        	scanf("%i", &searchKey2);
@@ -210,7 +181,8 @@ int main(){
 	fclose(arqReg);
 	fclose(arqArvore);
 }
-	
+
+
 
 /*Função para leitura do catalogo caractere por caractere até terminar um campo.
   Quando encontra um caractere ';' ou '\n', retorna a quantidade de caracteres lidos.*/

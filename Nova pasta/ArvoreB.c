@@ -47,6 +47,7 @@ void criaArvore(FILE* arqReg, FILE* arqArvore);
 void ordenaChaves(pagina *p);
 void ordenaChavesAux(paginaAuxiliar *p);
 short buscaRegistro(FILE* arqArvore, int id, short filho);
+void listaRegistro(FILE* arqReg, short offset);
 
 
 short raiz = -2;
@@ -117,22 +118,22 @@ int main(){
 	        	strBuffer[0] = '\0';
 
 
-	       		printf("\nDigite o nome do catalogo: ");
+	       		printf("\nDigite o nome do catalogo a ser importado: ");
    				gets(filename);
     			if((arqCat = fopen(filename, "r")) == NULL){
         			printf("*ERRO!");
        				break;
-    			}else{
-    				printf("*Arquivo Encontrado!*");}
+    			}/*else{
+    				printf("*Arquivo Encontrado!*");}*/
 
 
-	       		printf("\n\nDigite um nome para o novo Arquivo de Registros: ");
+	       		printf("Digite um nome para o Arquivo de Registros: ");
 				gets(filename);
 				if((arqReg = fopen(filename, "w+")) == NULL){
 	    			printf("*ERRO!");
 	    			break;
-				}else{
-					printf("*Arquivo Criado!*");}
+				}/*else{
+					printf("*Arquivo Criado!*");}*/
 
 				/*LED = -1;
 				rewind(arqReg);
@@ -147,7 +148,7 @@ int main(){
 
     			while(field_length > 0){
 			        campo ++;
-			        printf("\nCampo #%i = %s", campo, strCampo);
+			        //printf("\nCampo #%i = %s", campo, strCampo);
 			        strCampo[0] = '\0';
 
 			        if(!(campo % 5) ){
@@ -162,14 +163,18 @@ int main(){
 			        strcat(strBuffer,"|");
 				}
 				
-				printf("\n\nIMPORTACAO REALIZADA COM SUCESSO!");	        			
+				//printf("\n\nIMPORTACAO REALIZADA COM SUCESSO!");	        			
 				
 				//Cria um novo Arquivo de índice de árvore-b
 				if((arqArvore = fopen("ArvoreB", "w+")) == NULL){
 				    printf("*ERRO!");
 				    break;
 				} 
-				criaArvore(arqReg, arqArvore);	
+				criaArvore(arqReg, arqArvore);
+				printf("\nArquivos de Arvore e Registro Criados com Sucesso!");
+				printf("\n\nEnter para continuar ...");
+				getch();
+				system("cls");	
 					
 			break;
 			
@@ -182,12 +187,18 @@ int main(){
 	        	searchKey2 = atoi(searchKey);
 				
 				offset = buscaRegistro(arqArvore, searchKey2, rrnraiz);
-				printf("\n\nBYTEOFFSET = %d ", offset);
-				//listaRegistro(arqReg, offset);
+				//printf("\n\nBYTEOFFSET = %d ", offset);
+				listaRegistro(arqReg, offset);
+				printf("\n\nEnter para continuar ...");
+				getch();
+				system("cls");
 			break;
 			
 			case 4:
 				listaArvoreB(arqArvore);
+				printf("\n\nEnter para continuar ...");
+				getch();
+				system("cls");
 			break;
 		}
 					
@@ -325,8 +336,8 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 	} else{
 			//preciso fazer uma busca
 			rewind(arqArvore);
-			printf("FILHO QUERO = %d", filhoQuero);
-			getch();
+			//printf("FILHO QUERO = %d", filhoQuero);
+			//getch();
 			fseek(arqArvore, (filhoQuero-1)*(int)sizeof(pagina), SEEK_SET);
 			fread(p, sizeof(pagina), 1, arqArvore);
 			
@@ -359,8 +370,8 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 			
 			//se o lugar onde eu deveria estar ainda nao ta apontando
 			if(filhoQuero == -1){	
-			printf("ultimo filho quero = %d ", filhoQuero);
-			getch();
+			//printf("ultimo filho quero = %d ", filhoQuero);
+			//getch();
 				//verifico se a pagina tem lugar sobrando			
 				if(p->qtdKeys != MAX_KEYS){
 					for(i=0;i<MAX_KEYS;i++){
@@ -371,7 +382,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 							p->keys[i].byteoffset = byteoffset;
 							ordenaChaves(p);
 							
-							printf("\nRRN: %d", p->rrn);
+							/*printf("\nRRN: %d", p->rrn);
 							printf("\nChaves: ");
 							for(i=0;i<p->qtdKeys;i++){
 								printf("%i | ", p->keys[i].key);
@@ -385,7 +396,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 								printf("%d | ", p->child[i]);
 							}
 							printf("\n");
-							getch();
+							getch();*/
 							
 							rewind(arqArvore);
 							fseek(arqArvore, (p->rrn-1)*sizeof(pagina), SEEK_SET);
@@ -579,7 +590,7 @@ void criaArvore(FILE* arqReg, FILE* arqArvore){
 		
 		//insereChave(arqArvore, id2, byteoffset, aux);
 		insereChave(arqArvore, id2, byteoffset, rrnraiz);
-		byteoffset = byteoffset + rec_length;	
+		byteoffset = byteoffset + rec_length +2;	
 		rec_length = obterRegistro(arqReg, strBuffer);
 	}
 		
@@ -623,7 +634,9 @@ short buscaRegistro(FILE* arqArvore, int id, short filho){
 	
 	for(i=0;i<p->qtdKeys;i++){
 		//encontro lugar em branco
-		if(p->keys[i].key == id){							
+		if(p->keys[i].key == id){
+			printf("\n----------------------------------------------------------------");
+			printf("\nEsta na pagina: %d ", p->rrn);						
 			return p->keys[i].byteoffset;
 		}
 	}
@@ -638,4 +651,24 @@ short buscaRegistro(FILE* arqArvore, int id, short filho){
 		}
 	}
 	return;
+}
+
+void listaRegistro(FILE* arqReg, short offset){
+	//pagina *p = malloc(sizeof(pagina));
+	short tam;
+	char reg[512];
+	char *token;
+	int campo = 1;
+	rewind(arqReg);
+	fseek(arqReg, offset, SEEK_SET);
+	fread(&tam, sizeof(tam), 1, arqReg);
+    fread(reg, 1 ,tam, arqReg);
+	token = strtok(reg, "|");
+	printf("| Byteoffset: %d | Tamanho do Registro : %i\n", offset, tam);
+	while(token != NULL){
+		printf("\nCampo #%i: %s", campo, token);
+		token = strtok(NULL, "|");
+		campo++;
+	}
+	printf("\n----------------------------------------------------------------");
 }

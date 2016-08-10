@@ -46,6 +46,7 @@ typedef struct {
 void criaArvore(FILE* arqReg, FILE* arqArvore);
 void ordenaChaves(pagina *p);
 void ordenaChavesAux(paginaAuxiliar *p);
+short buscaRegistro(FILE* arqArvore, int id, short filho);
 
 
 short raiz = -2;
@@ -74,10 +75,18 @@ int main(){
 	short LEDatual;//Armazena o valor da LED que esta sendo verificada 
 	short aux;
 	
+	/*char testec[2];
+	testec[0] = '1';
+	testec[1] = '0';
+	int teste;
+	teste = atoi(testec);*/
+	
 
 	//Variáveis da Busca Sequencial para procurar o registro a ser removido
-	char searchKey[10]; //ID a ser removido
-	char* id; //ID do registro a ser comparado com o procurado
+	char searchKey[2]; //ID a ser removido
+	int searchKey2;
+	short offset;
+	//char* id; //ID do registro a ser comparado com o procurado
 	bool matched = false; //Armazena o estado da procura
 	
 	FILE* arqCat;
@@ -97,6 +106,7 @@ int main(){
 	    printf("    5. Terminar o programa\n");
 	    printf("\nDigite o numero da sua escolha: ");
 	    //printf("%i\n",(int)sizeof(pagina));
+	    //printf("teste = %i", teste);
 	    scanf("%d", &opcao);
 	    fflush(stdin);
 	    
@@ -163,8 +173,22 @@ int main(){
 					
 			break;
 			
+			case 3:
+				
+				matched = false;
+	        	printf("\nQual o ID procurado?: ");
+	        	gets(searchKey);
+	        	
+	        	searchKey2 = atoi(searchKey);
+				
+				offset = buscaRegistro(arqArvore, searchKey2, rrnraiz);
+				printf("\n\nBYTEOFFSET = %d ", offset);
+				//listaRegistro(arqReg, offset);
+			break;
+			
 			case 4:
 				listaArvoreB(arqArvore);
+			break;
 		}
 					
 	    
@@ -587,4 +611,31 @@ void listaArvoreB(FILE* arqArvore){
 		printf("\n");
 		fread(p, sizeof(pagina), 1, arqArvore);
 	}
+}
+
+short buscaRegistro(FILE* arqArvore, int id, short filho){
+	//short filho;
+	int i;
+	rewind(arqArvore);
+	fseek(arqArvore, (filho-1)*sizeof(pagina), SEEK_SET);
+	pagina *p = malloc(sizeof(pagina));
+	fread(p, sizeof(pagina), 1, arqArvore);
+	
+	for(i=0;i<p->qtdKeys;i++){
+		//encontro lugar em branco
+		if(p->keys[i].key == id){							
+			return p->keys[i].byteoffset;
+		}
+	}
+	
+	for(i=0;i<p->qtdKeys;i++){
+		if(p->keys[i].key > id){
+			filho = p->child[i];
+			//rrnChild = i;
+			return buscaRegistro(arqArvore, id, filho);
+		} else{
+			filho = p->child[i+1];
+		}
+	}
+	return;
 }

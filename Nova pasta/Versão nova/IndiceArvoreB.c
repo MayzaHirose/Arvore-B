@@ -44,6 +44,8 @@ void listaRegistro(FILE* arqReg, short offset);
 short raiz = -2;
 short rrnCount = 1;
 short rrnraiz = -2;
+int promoteKey = 0;
+short promoteByte = 0;
 
 int main(){
 	
@@ -277,6 +279,8 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 	short rrnChild;
 	bool divisao=false;
 	bool promocao=false;
+	short pagAtual = 0;
+	short pagVim = 0;
 	//short filhoQuero;
 	pagina *p = malloc(sizeof(pagina));
 	if(filhoQuero == -2){
@@ -329,6 +333,9 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 			printf("\n");
 			getch();*/
 			
+			//ja pego qual a pagina estamos para qdo retornar ele aber onde colocar a chave
+			pagAtual = p->rrn;
+			
 			//pego a posição q a chave deveria estar
 			for(i=0;i<p->qtdKeys;i++){
 				if(p->keys[i].key > id2){
@@ -379,9 +386,10 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 					}
 				//se não tenho q dividir a pagina etc
 				} else{	
-					//enquanto divisao
-					//while(divisao){	
-					//gambi basica
+					//pego e junto a pagina com a chave q eu preciso e vejo se tem q romover ou criar nova raiz
+					promocao = true;
+					
+					while(promocao){
 						paginaAuxiliar *aux = malloc(sizeof(paginaAuxiliar));
 						aux->keys[0].key = p->keys[0].key;
 						aux->keys[1].key = p->keys[1].key;
@@ -403,34 +411,17 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 						ordenaChavesAux(aux);
 						
 						pagina *nova = malloc(sizeof(pagina));
-						pagina *novaRaiz = malloc(sizeof(pagina));
-						//paginaAuxiliar *aux = malloc(sizeof(paginaAuxiliar));
-						//rewind(arqArvore);
-						//fseek(arqArvore, ((filhoQuero-1)*sizeof(pagina))+, SEEK_SET);
-						//fread(aux, sizeof(paginaAuxiliar), 1, arqArvore);
-						
-						//inicializa
 						nova->rrn = rrnCount;						
 						nova->qtdKeys = 0;	
 						rrnCount++;	
-						novaRaiz->rrn = rrnCount;
-						novaRaiz->qtdKeys = 0;	
-								
+						
 						for(i=0; i<MAX_KEYS; i++){					
 							nova->keys[i].key = -1;
 							nova->keys[i].byteoffset = -1;
 							nova->child[i] = -1;
-
-							novaRaiz->keys[i].key = -1;
-							novaRaiz->keys[i].byteoffset = -1;
-							novaRaiz->child[i] = -1;
-							
 						}
 						nova->child[4] = -1;
-						novaRaiz->child[4] = -1;
-						//fim inicializa
 						
-						//seta valores
 						p->qtdKeys = 2;
 						
 						p->keys[2].key = -1;
@@ -450,23 +441,53 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 						nova->keys[0].byteoffset = aux->keys[3].byteoffset;
 						nova->keys[1].byteoffset = aux->keys[4].byteoffset;
 						
-						novaRaiz->qtdKeys++;
-						novaRaiz->keys[0].key = aux->keys[2].key;
-						novaRaiz->keys[0].byteoffset = aux->keys[2].byteoffset; 
+						promoteKey = aux->keys[2].key;
+						promoteByte = aux->keys[2].byteoffset;
 						
-						novaRaiz->child[0] = p->rrn;
-						novaRaiz->child[1] = nova->rrn;
+						//se for uma destas opções, preciso criar nova raiz
+						if(pagAtual == 1 || pagAtual == rrnraiz){
+					
+							//if(p->rrn == rrnraiz)				
+							pagina *novaRaiz = malloc(sizeof(pagina));
+							//paginaAuxiliar *aux = malloc(sizeof(paginaAuxiliar));
+							//rewind(arqArvore);
+							//fseek(arqArvore, ((filhoQuero-1)*sizeof(pagina))+, SEEK_SET);
+							//fread(aux, sizeof(paginaAuxiliar), 1, arqArvore);
+							
+							//inicializa	
+							novaRaiz->rrn = rrnCount;
+							novaRaiz->qtdKeys = 0;	
+									
+							for(i=0; i<MAX_KEYS; i++){					
+								novaRaiz->keys[i].key = -1;
+								novaRaiz->keys[i].byteoffset = -1;
+								novaRaiz->child[i] = -1;
+								
+							}
+							novaRaiz->child[4] = -1;
+							//fim inicializa
+							
+							//seta valores						
+							novaRaiz->qtdKeys++;
+							novaRaiz->keys[0].key = promoteKey;
+							novaRaiz->keys[0].byteoffset = promoteByte; 
+							
+							novaRaiz->child[0] = p->rrn;
+							novaRaiz->child[1] = nova->rrn;
+							
+							rewind(arqArvore);
+							fwrite(p, sizeof(pagina), 1, arqArvore);
+							fwrite(nova, sizeof(pagina), 1, arqArvore);
+							fwrite(novaRaiz, sizeof(pagina), 1, arqArvore);
 						
-						rewind(arqArvore);
-						fwrite(p, sizeof(pagina), 1, arqArvore);
-						fwrite(nova, sizeof(pagina), 1, arqArvore);
-						fwrite(novaRaiz, sizeof(pagina), 1, arqArvore);
-						
-						//p->child[rrnChild] = nova->rrn;
-					//}
-					rrnCount++;	
-					rrnraiz=novaRaiz->rrn;				
-				}
+							rrnCount++;	
+							rrnraiz=novaRaiz->rrn;
+						}//fim if	
+					promocao = false;					
+					}//fim while
+				}//fim else
+				
+				
 			} else{
 				insereChave(arqArvore, id2, byteoffset, filhoQuero);
 				
@@ -539,7 +560,7 @@ void ordenaChavesAux(paginaAuxiliar *p){
 }
 
 void criaArvore(FILE* arqReg, FILE* arqArvore){
-	short rec_length;
+	short rec_length = 0;
 	char strBuffer[512];
 	char id[2];
 	int id2;

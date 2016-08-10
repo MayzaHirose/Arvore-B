@@ -26,6 +26,7 @@ typedef struct {
 	chave keys[MAX_KEYS];
 	short child[ORDEM_PAG]; 
 	int qtdKeys;
+	short pai;
 }pagina;
 
 typedef struct {
@@ -33,6 +34,7 @@ typedef struct {
 	chave keys[MAX_KEYS+1];
 	short child[ORDEM_PAG+1];
 	int qtdKeys;
+	short pai;
 }paginaAuxiliar;
 
 void criaArvore(FILE* arqReg, FILE* arqArvore);
@@ -284,6 +286,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 	//short filhoQuero;
 	pagina *p = malloc(sizeof(pagina));
 	if(filhoQuero == -2){
+		printf("inserindo na primeira pagina");
 			//pagina *p = malloc(sizeof(pagina));
 						
 			//inicializa pagina
@@ -300,6 +303,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 			p->qtdKeys++;
 			p->keys[0].key = id2;
 			p->keys[0].byteoffset = byteoffset;
+			p->pai = -2;
 			
 			rewind(arqArvore);
 			fwrite(p, sizeof(pagina), 1, arqArvore);
@@ -349,10 +353,12 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 			
 			//se o lugar onde eu deveria estar ainda nao ta apontando
 			if(filhoQuero == -1){	
+			printf("filho quero nao existe");
 			//printf("ultimo filho quero = %d ", filhoQuero);
 			//getch();
 				//verifico se a pagina tem lugar sobrando			
 				if(p->qtdKeys != MAX_KEYS){
+					printf("tem lugar");
 					for(i=0;i<MAX_KEYS;i++){
 						//encontro lugar em branco
 						if(p->keys[i].key == -1){
@@ -386,6 +392,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 					}
 				//se não tenho q dividir a pagina etc
 				} else{	
+					printf("tem q promover");
 					//pego e junto a pagina com a chave q eu preciso e vejo se tem q romover ou criar nova raiz
 					promocao = true;
 					
@@ -405,6 +412,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 						
 						aux->rrn = 0;
 						aux->qtdKeys = 5;
+						aux->pai = -2;
 						for(i=0; i<ORDEM_PAG; i++){	
 							aux->child[i] = -1;
 						}
@@ -413,6 +421,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 						pagina *nova = malloc(sizeof(pagina));
 						nova->rrn = rrnCount;						
 						nova->qtdKeys = 0;	
+						nova->pai = -2;
 						rrnCount++;	
 						
 						for(i=0; i<MAX_KEYS; i++){					
@@ -445,8 +454,10 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 						promoteByte = aux->keys[2].byteoffset;
 						
 						//se for uma destas opções, preciso criar nova raiz
-						if(pagAtual == 1 || pagAtual == rrnraiz){
-					
+						//if(pagAtual == 1 || pagAtual == rrnraiz){
+						//se o pai nao existe, crio um novo pai
+						if(p->pai == -2 ){
+							printf("nova raiz");
 							//if(p->rrn == rrnraiz)				
 							pagina *novaRaiz = malloc(sizeof(pagina));
 							//paginaAuxiliar *aux = malloc(sizeof(paginaAuxiliar));
@@ -457,6 +468,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 							//inicializa	
 							novaRaiz->rrn = rrnCount;
 							novaRaiz->qtdKeys = 0;	
+							novaRaiz->pai = -2;
 									
 							for(i=0; i<MAX_KEYS; i++){					
 								novaRaiz->keys[i].key = -1;
@@ -475,6 +487,9 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 							novaRaiz->child[0] = p->rrn;
 							novaRaiz->child[1] = nova->rrn;
 							
+							p->pai = novaRaiz->rrn;
+							nova->pai = novaRaiz->rrn;
+							
 							rewind(arqArvore);
 							fwrite(p, sizeof(pagina), 1, arqArvore);
 							fwrite(nova, sizeof(pagina), 1, arqArvore);
@@ -482,15 +497,45 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 						
 							rrnCount++;	
 							rrnraiz=novaRaiz->rrn;
-						}//fim if	
-					promocao = false;					
+							promocao = false;
+						} else {
+							printf("TA ENTRANDO ONDE NAO DEVE");
+							rewind(arqArvore);
+							fseek(arqArvore, (p->pai-1)*sizeof(pagina), SEEK_SET);
+							pagina* auxPai = malloc(sizeof(pagina));
+							fread(auxPai, sizeof(pagina), 1, arqArvore);
+							if(auxPai->qtdKeys != MAX_KEYS){
+								for(i=0;i<MAX_KEYS;i++){
+									//encontro lugar em branco
+									if(auxPai->keys[i].key == -1){
+										auxPai->qtdKeys++;
+										auxPai->keys[i].key = promoteKey;
+										auxPai->keys[i].byteoffset = promoteByte;
+										ordenaChaves(auxPai);
+										
+										rewind(arqArvore);
+										fseek(arqArvore, (p->pai-1)*sizeof(pagina), SEEK_SET);
+										fwrite(auxPai, sizeof(pagina), 1, arqArvore);
+										//rewind(arqArvore);
+										
+										//fwrite(p, sizeof(pagina), 1, arqArvore);
+										//fwrite(nova, sizeof(pagina), 1, arqArvore);
+										break;
+										//return;
+									}
+								}
+								printf("saiu do if");
+								promocao = false;
+							}
+							
+						}						
 					}//fim while
 				}//fim else
 				
 				
 			} else{
-				insereChave(arqArvore, id2, byteoffset, filhoQuero);
-				
+				printf("TA NA RECURSIVIDADE");
+				insereChave(arqArvore, id2, byteoffset, filhoQuero);				
 			}
 	}
 
@@ -599,7 +644,7 @@ void listaArvoreB(FILE* arqArvore){
 	while(feof(arqArvore) == 0){
 		if(p->rrn == rrnraiz)
 			printf("\n\n-----Pagina Raiz-----");
-		printf("\nRRN: %d", p->rrn);
+		printf("\nRRN: %d | Pai: %d ", p->rrn, p->pai);
 		printf("\nChaves: ");
 		for(i=0;i<MAX_KEYS;i++){
 			printf("%i | ", p->keys[i].key);

@@ -6,6 +6,8 @@
 #define ORDEM_PAG 5
 #define MAX_KEYS 4
 
+/* Mayza Yuri Hirose da Costa RA 88739 */
+
 enum boolean {
     true = 1, false = 0
 };
@@ -40,13 +42,12 @@ typedef struct {
 void criaArvore(FILE* arqReg, FILE* arqArvore);
 void ordenaChaves(pagina *p);
 void ordenaChavesAux(paginaAuxiliar *p);
-short buscaRegistro(FILE* arqArvore, int id, short filho);
+short buscaRegistroArvore(FILE* arqArvore, int id, short filho);
 void listaRegistro(FILE* arqReg, short offset);
 
-short rai = -2;
 short rrnCount = 1;
 short rrnraiz = -2;
-short byte=0;
+short byte = 0;
 int promoteKey = 0;
 short promoteByte = 0;
 
@@ -54,21 +55,18 @@ int main(){
 	
 	//Variáveis comuns
 	int opcao = 0; //Opcão do menu
+	int field_length = 0; //Armazena o tamanho do campo
 	int campo = 0; //Contador de campos
 	int contadorReg = 0; //Contador de registros
-	int field_length = 0; //Armazena o tamanho do campo
 	short tamanhoRegistro = 0; //Armazena o tamanho do registro
 	short rec_length; //Armazena o tamanho do registro
 	char filename[20], strCampo[256], strBuffer[512]; // Strings
 	char* token; //Armazena parte de string ao utilizar strtok
 	char id[2];
 	int id2;
-
-	//Variáveis da Busca Sequencial para procurar o registro a ser removido
-	char searchKey[2]; //ID a ser removido
-	int searchKey2;
+	
+	int searchKey;
 	short offset;
-	//char* id; //ID do registro a ser comparado com o procurado
 	
 	FILE* arqCat;
 	FILE* arqReg;
@@ -87,40 +85,30 @@ int main(){
 	    printf("    5. Terminar o programa\n");
 	    printf("\nDigite o numero da sua escolha: ");
 	    //printf("%i\n",(int)sizeof(pagina));
-	    //printf("teste = %i", teste);
 	    scanf("%d", &opcao);
 	    fflush(stdin);
 	    
 	    switch(opcao){
-	    	/* IMPORTAÇÃO DE REGISTROS */
+	    	
+	    	/*Importação de Registro */
 	        case 1:
 	        	strCampo[0] = '\0';
 	        	strBuffer[0] = '\0';
-
 
 	       		printf("\nDigite o nome do catalogo a ser importado: ");
    				gets(filename);
     			if((arqCat = fopen(filename, "r")) == NULL){
         			printf("*ERRO!");
        				break;
-    			}/*else{
-    				printf("*Arquivo Encontrado!*");}*/
-
+    			}
 
 	       		printf("Digite um nome para o Arquivo de Registros: ");
 				gets(filename);
 				if((arqReg = fopen(filename, "w+")) == NULL){
 	    			printf("*ERRO!");
 	    			break;
-				}/*else{
-					printf("*Arquivo Criado!*");}*/
-
-				/*LED = -1;
-				rewind(arqReg);
-    			fwrite(&LED, sizeof(LED), 1, arqReg);*/
-
-				
-				
+				}
+								
     			/*Faz a importação dos dados do catalogo para o arquivo de registro com os devidos ajustes*/
 				field_length = obterCampos(arqCat, strCampo, &contadorReg);
 				strcat(strBuffer,strCampo);
@@ -141,9 +129,7 @@ int main(){
 			        field_length = obterCampos(arqCat, strCampo, &contadorReg);
 			        strcat(strBuffer,strCampo);
 			        strcat(strBuffer,"|");
-				}
-				
-				//printf("\n\nIMPORTACAO REALIZADA COM SUCESSO!");	        			
+				}	        			
 				
 				//Cria um novo Arquivo de índice de árvore-b
 				if((arqArvore = fopen("ArvoreB", "w+")) == NULL){
@@ -157,60 +143,55 @@ int main(){
 				system("cls");	
 					
 			break;
+			/*Fim Importação*/
 			
-			case 2:
-				
-					strCampo[0] = '\0';
-		        	strBuffer[0] = '\0';
+			/*Inicio insere registro*/
+			case 2:				
+				strCampo[0] = '\0';
+		        strBuffer[0] = '\0';
 	
-		        	//Recebe o novo registro
-		        	receberDados(strBuffer);
-		        	printf("\n\nDados recebidos: %s", strBuffer);
-					//Escrevo o tamanho do registro e o registro no final do arquivo
-		        	fwrite(&tamanhoRegistro, sizeof(tamanhoRegistro), 1, arqReg);
-	        		fwrite(strBuffer, tamanhoRegistro, 1, arqReg);	        		
+		        //Recebe o novo registro
+		        receberDados(strBuffer);
+		        printf("\n\nDados recebidos: %s", strBuffer);
+		        
+				//Escrevo o tamanho do registro e o registro no final do arquivo
+		        fwrite(&tamanhoRegistro, sizeof(tamanhoRegistro), 1, arqReg);
+	        	fwrite(strBuffer, tamanhoRegistro, 1, arqReg);	        		
 	        		
-	        		id[0] = strBuffer[0];
-					id[1] = strBuffer[1]; 
-					id2 = atoi(id);
+	        	id[0] = strBuffer[0];
+				id[1] = strBuffer[1]; 
+				id2 = atoi(id);
 			
-					//rewind(arqArvore);
-					//fread(&aux, sizeof(raiz) ,1, arqArvore);
-					
-					//insereChave(arqArvore, id2, byteoffset, aux);
-					insereChave(arqArvore, id2, byte, rrnraiz);
-					byte = byte + tamanhoRegistro +2;	
-				        		
+				insereChave(arqArvore, id2, byte, rrnraiz);
+				byte = byte + tamanhoRegistro +2;					        		
 	    	break;
+	    	/*Fim insere registro*/
 			
+			/*Busca de Registro*/
 			case 3:
 	        	printf("\nQual o ID procurado?: ");
-	        	//gets(searchKey);
-	        	scanf("%i", &searchKey2);
-	        	//searchKey2 = atoi(searchKey);
+	        	scanf("%i", &searchKey);
 				
-				offset = buscaRegistro(arqArvore, searchKey2, rrnraiz);
-				//printf("\n\nBYTEOFFSET = %d ", offset);
-				//if(offset != 0){
-					listaRegistro(arqReg, offset);
-				//} else{
-					//printf("Registro nao encontrado!");
-				//}
+				offset = buscaRegistroArvore(arqArvore, searchKey, rrnraiz);
+				listaRegistro(arqReg, offset);
+				
 				printf("\n\nEnter para continuar ...");
 				getch();
 				system("cls");
 			break;
+			/*Fim Busca Registro*/
 			
+			/*Listar Arvore B*/
 			case 4:
 				listaArvoreB(arqArvore);
+				
 				printf("\n\nEnter para continuar ...");
 				getch();
 				system("cls");
 			break;
-			
+			/*Fim Listar Arvore B*/
 		}
-					
-	    
+						    
 	}while(opcao < 5 && opcao > 0);
 	
 	//encerra os arquivos ao final
@@ -220,6 +201,18 @@ int main(){
 }
 
 
+void inicializaPagina(pagina* p){
+	int i;
+	p->rrn = 0;
+	p->qtdKeys = 0;
+	p->pai = -2;
+	for(i=0; i<MAX_KEYS; i++){					
+		p->keys[i].key = -1;
+		p->keys[i].byteoffset = -1;				
+		p->keys[i].esq = -1;
+		p->keys[i].dir = -1;
+	}					
+}
 
 /*Função para leitura do catalogo caractere por caractere até terminar um campo.
   Quando encontra um caractere ';' ou '\n', retorna a quantidade de caracteres lidos.*/
@@ -295,343 +288,179 @@ void receberDados(char* strBuffer){
     strcat(strBuffer,"|");
 }
 
-/*void inicializaPagina(pagina* p){
-	printf("inicializando pag");
+void insereChave(FILE * arqArvore, int id, short byteoffset, short filhoQuero){
 	int i;
-	(*p).rrn = rrnCount;
-	for(i=0; i<MAX_KEYS; i++){					
-		(*p).keys[i].key[0] = -1;
-		(*p).keys[i].byteoffset = -1;
-		(*p).child[i] = -1;
-	}
-	(*p).child[4] = -1;					
-}*/
-
-
-
-void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
-	int i;
-	short rrnChild;
-	bool divisao=false;
-	bool promocao=false;
-	short pagAtual = 0;
-	short pagVim = 0;
-	int keyAux;
-	short apontadoPor;
-	//short filhoQuero;
+	bool promocao = false;
+	
 	pagina *p = malloc(sizeof(pagina));
-	if(filhoQuero == -2){
-			//pagina *p = malloc(sizeof(pagina));
-						
-			//inicializa pagina
-			p->rrn = rrnCount;
-			p->qtdKeys = 0;
-			for(i=0; i<MAX_KEYS; i++){					
-				p->keys[i].key = -1;
-				p->keys[i].byteoffset = -1;
-				p->keys[i].esq = -1;
-				p->keys[i].dir = -1;
-			}
-		
-			//fim inicializacao
+	
+	//Primeiro caso, não existe pagina, raiz -2
+	if(filhoQuero == -2){					
 			
+			inicializaPagina(p);
+			
+			p->rrn = rrnCount;		
 			p->qtdKeys++;
-			p->keys[0].key = id2;
+			p->keys[0].key = id;
 			p->keys[0].byteoffset = byteoffset;
-			p->pai = -2;
 			
 			rewind(arqArvore);
 			fwrite(p, sizeof(pagina), 1, arqArvore);
 			rewind(arqArvore);
 			fread(&rrnraiz, sizeof(rrnraiz) ,1, arqArvore);
-						
-			//rewind(arqArvore);
-			//fread(p2, sizeof(pagina), 1, arqArvore);
-		rrnCount++;	
+
+			rrnCount++;	
+			
+	//Já tem página. Preciso buscar a página que eu quero inserir
 	} else{
-			//preciso fazer uma busca
 			rewind(arqArvore);
-			//printf("FILHO QUERO = %d", filhoQuero);
-			//getch();
-			fseek(arqArvore, (filhoQuero-1)*(int)sizeof(pagina), SEEK_SET);
+			fseek(arqArvore, (filhoQuero-1)*sizeof(pagina), SEEK_SET);
 			fread(p, sizeof(pagina), 1, arqArvore);
 			
-			/*printf("\nRRN: %d", p->rrn);
-			printf("\nChaves: ");
+			//Pego a posição q a chave deveria estar
 			for(i=0;i<p->qtdKeys;i++){
-				printf("%i | ", p->keys[i].key);
-			}
-			printf("\nOffsets: ");
-			for(i=0;i<p->qtdKeys;i++){
-				printf("%d | ", p->keys[i].byteoffset);
-			}
-			printf("\nVetor de Filhos: ");
-			for(i=0;i<ORDEM_PAG;i++){
-				printf("%d | ", p->child[i]);
-			}
-			printf("\n");
-			getch();*/
-			
-			//ja pego qual a pagina estamos para qdo retornar ele aber onde colocar a chave
-			pagAtual = p->rrn;
-			
-			//pego a posição q a chave deveria estar
-			for(i=0;i<p->qtdKeys;i++){
-				if(p->keys[i].key > id2){
-					//filhoQuero = p->child[i];
-					filhoQuero = p->keys[i].esq;
-					rrnChild = i;
-					keyAux = p->keys[i].key;
+				if(p->keys[i].key > id){					
+					filhoQuero = p->keys[i].esq;					
 					break;
-				} else{
-					//filhoQuero = p->child[i+1];
-					filhoQuero = p->keys[i].dir;
-					rrnChild = i;
+				} else{				
+					filhoQuero = p->keys[i].dir;					
 				}
 			}
 			
-			//se o lugar onde eu deveria estar ainda nao ta apontando
+			//Se o lugar onde eu deveria estar aponta pra -1
 			if(filhoQuero == -1){	
-			//printf("ultimo filho quero = %d ", filhoQuero);
-			//getch();
-				//verifico se a pagina tem lugar sobrando			
+			
+				//Verifico se a pagina tem lugar sobrando			
 				if(p->qtdKeys != MAX_KEYS){
 					for(i=0;i<MAX_KEYS;i++){
-						//encontro lugar em branco
 						if(p->keys[i].key == -1){
 							p->qtdKeys++;
-							p->keys[i].key = id2;
+							p->keys[i].key = id;
 							p->keys[i].byteoffset = byteoffset;
 							ordenaChaves(p);
 							
-							/*printf("\nRRN: %d", p->rrn);
-							printf("\nChaves: ");
-							for(i=0;i<p->qtdKeys;i++){
-								printf("%i | ", p->keys[i].key);
-							}
-							printf("\nOffsets: ");
-							for(i=0;i<p->qtdKeys;i++){
-								printf("%d | ", p->keys[i].byteoffset);
-							}
-							printf("\nVetor de Filhos: ");
-							for(i=0;i<ORDEM_PAG;i++){
-								printf("%d | ", p->child[i]);
-							}
-							printf("\n");
-							getch();*/
-							
 							rewind(arqArvore);
 							fseek(arqArvore, (p->rrn-1)*sizeof(pagina), SEEK_SET);
-							fwrite(p, sizeof(pagina), 1, arqArvore);
-							//break;
+							fwrite(p, sizeof(pagina), 1, arqArvore);							
 							return;
 						}
 					}
-				//se não tenho q dividir a pagina etc
+					
+				//Se não tiver lugar, tenho q dividir a pagina.
 				} else{	
-					//pego e junto a pagina com a chave q eu preciso e vejo se tem q romover ou criar nova raiz
+				
 					promocao = true;
-					//promo:
 					while(promocao){
-						
+						//Crio uma página auxiliar para colocar todas as chaves, inclusive a nova
 						paginaAuxiliar *aux = malloc(sizeof(paginaAuxiliar));
-						aux->keys[0].key = p->keys[0].key;
-						aux->keys[1].key = p->keys[1].key;
-						aux->keys[2].key = p->keys[2].key;
-						aux->keys[3].key = p->keys[3].key;
-						aux->keys[4].key = id2;
 						
-						aux->keys[0].byteoffset = p->keys[0].byteoffset;
-						aux->keys[1].byteoffset = p->keys[1].byteoffset;
-						aux->keys[2].byteoffset = p->keys[2].byteoffset;
-						aux->keys[3].byteoffset = p->keys[3].byteoffset;
+						//Faço a auxiliar receber as chaves de p e a nova chave
+						for(i=0;i<MAX_KEYS;i++){
+							aux->keys[i].key = p->keys[i].key;												
+							aux->keys[i].byteoffset = p->keys[i].byteoffset;
+							aux->keys[i].esq = p->keys[i].esq;
+							aux->keys[i].dir = p->keys[i].dir;
+						}
+						aux->keys[4].key = id;
 						aux->keys[4].byteoffset = byteoffset;
-						
-						aux->keys[0].esq = p->keys[0].esq;
-						aux->keys[1].esq = p->keys[1].esq;
-						aux->keys[2].esq = p->keys[2].esq;
-						aux->keys[3].esq = p->keys[3].esq;
 						aux->keys[4].esq = -1;
-						
-						aux->keys[0].dir = p->keys[0].dir;
-						aux->keys[1].dir = p->keys[1].dir;
-						aux->keys[2].dir = p->keys[2].dir;
-						aux->keys[3].dir = p->keys[3].dir;
-						aux->keys[4].dir = -1;
-						
+						aux->keys[4].dir = -1;						
 						aux->rrn = 0;
 						aux->qtdKeys = 5;
-						aux->pai = -2;
-						
+						aux->pai = -2;					
 						ordenaChavesAux(aux);
 						
-						pagina *nova = malloc(sizeof(pagina));
+						pagina *nova = malloc(sizeof(pagina));						
+						inicializaPagina(nova);
+						
 						nova->rrn = rrnCount;						
-						nova->qtdKeys = 0;	
-						nova->pai = -2;
 						rrnCount++;	
 						
-						for(i=0; i<MAX_KEYS; i++){					
-							nova->keys[i].key = -1;
-							nova->keys[i].byteoffset = -1;
-							
-							nova->keys[i].esq = -1;
-							nova->keys[i].dir = -1;
-						}
-						
-						
+						//Agora retiro as chaves de 'p' que nao fazem mais parte dela e pego as novas de aux que ja foram ordenadas										
 						p->qtdKeys = 2;
 						
-						p->keys[2].key = -1;
-						p->keys[3].key = -1;
-						p->keys[2].byteoffset = -1;
-						p->keys[3].byteoffset = -1;
-						
-						p->keys[0].key = aux->keys[0].key;
-						p->keys[1].key = aux->keys[1].key;
-						p->keys[0].byteoffset = aux->keys[0].byteoffset;
-						p->keys[1].byteoffset = aux->keys[1].byteoffset;
-						
-												
-						nova->qtdKeys = 2;
+						//retiro as chaves
+						for(i=2;i<4;i++){
+							p->keys[i].key = -1;						
+							p->keys[i].byteoffset = -1;
+							p->keys[i].esq = -1;
+							p->keys[i].dir = -1;
+						}
+						//Coloco novos valores no 'p'
+						for(i=0;i<2;i++){
+							p->keys[i].key = aux->keys[i].key;						
+							p->keys[i].byteoffset = aux->keys[i].byteoffset;
+						}
+																		
+						nova->qtdKeys = 2;						
 						nova->keys[0].key = aux->keys[3].key;
 						nova->keys[1].key = aux->keys[4].key;
 						nova->keys[0].byteoffset = aux->keys[3].byteoffset;
 						nova->keys[1].byteoffset = aux->keys[4].byteoffset;
 						
+						//A chave para promoção será a que está na posição 2
 						promoteKey = aux->keys[2].key;
 						promoteByte = aux->keys[2].byteoffset;
 						
-						//se for uma destas opções, preciso criar nova raiz
-						//if(pagAtual == 1 || pagAtual == rrnraiz){
-						//se o pai nao existe, crio um novo pai
+						//Verifico se o pai da página possui lugar disponível para promocao						
 						promo:
-						if(p->pai == -2 ){
-							printf("nova raiz");
-							//if(p->rrn == rrnraiz)				
+						//se nao existe pai, crio uma nova raiz e seto os valores
+						if(p->pai == -2 ){			
 							pagina *novaRaiz = malloc(sizeof(pagina));
-							//paginaAuxiliar *aux = malloc(sizeof(paginaAuxiliar));
-							//rewind(arqArvore);
-							//fseek(arqArvore, ((filhoQuero-1)*sizeof(pagina))+, SEEK_SET);
-							//fread(aux, sizeof(paginaAuxiliar), 1, arqArvore);
 							
-							//inicializa	
+							inicializaPagina(novaRaiz);								
 							novaRaiz->rrn = rrnCount;
-							novaRaiz->qtdKeys = 0;	
-							novaRaiz->pai = -2;
-									
-							for(i=0; i<MAX_KEYS; i++){					
-								novaRaiz->keys[i].key = -1;
-								novaRaiz->keys[i].byteoffset = -1;
-								
-								novaRaiz->keys[i].esq = -1;
-								novaRaiz->keys[i].dir = -1;
-							}
-							
-							//fim inicializa
-							
+							rrnCount++;
+
 							//seta valores						
 							novaRaiz->qtdKeys++;
 							novaRaiz->keys[0].key = promoteKey;
 							novaRaiz->keys[0].byteoffset = promoteByte; 
-							
-							
-							
+														
 							novaRaiz->keys[0].esq = p->rrn;
 							novaRaiz->keys[0].dir = nova->rrn;
 							
+							//As paginas que foram divididas recebem a nova raiz como pai
 							p->pai = novaRaiz->rrn;
 							nova->pai = novaRaiz->rrn;
-							
-							
-								printf("\nRRN P: %d", p->rrn);
-									printf("\nChaves: ");
-									for(i=0;i<p->qtdKeys;i++){
-										printf("%i | ", p->keys[i].key);
-									}
-									printf("\nOffsets: ");
-									for(i=0;i<p->qtdKeys;i++){
-										printf("%d | ", p->keys[i].byteoffset);
-									}
-									printf("\nValores Apontados pela Pagina: ");
-									for(i=0;i<MAX_KEYS;i++){
-										//if(i==0)
-											printf("%d | ", p->keys[i].esq);
-										printf("%d | ", p->keys[i].dir);
-									}
-									printf("\n");
-									getch();
-									
-									printf("\nRRN nova: %d", nova->rrn);
-									printf("\nChaves: ");
-									for(i=0;i<nova->qtdKeys;i++){
-										printf("%i | ", nova->keys[i].key);
-									}
-									printf("\nOffsets: ");
-									for(i=0;i<nova->qtdKeys;i++){
-										printf("%d | ", nova->keys[i].byteoffset);
-									}
-									printf("\nValores Apontados pela Pagina: ");
-									for(i=0;i<MAX_KEYS;i++){
-										//if(i==0)
-											printf("%d | ", nova->keys[i].esq);
-										printf("%d | ", nova->keys[i].dir);
-									}
-									printf("\n");
-									getch();	
-									
-									printf("\nRRN raiz: %d", novaRaiz->rrn);
-									printf("\nChaves: ");
-									for(i=0;i<novaRaiz->qtdKeys;i++){
-										printf("%i | ", novaRaiz->keys[i].key);
-									}
-									printf("\nOffsets: ");
-									for(i=0;i<novaRaiz->qtdKeys;i++){
-										printf("%d | ", novaRaiz->keys[i].byteoffset);
-									}
-									printf("\nValores Apontados pela Pagina: ");
-									for(i=0;i<MAX_KEYS;i++){
-										//if(i==0)
-											printf("%d | ", novaRaiz->keys[i].esq);
-										printf("%d | ", novaRaiz->keys[i].dir);
-									}
-									printf("\n");
-									getch();
-						
-							
+																												
+							//Gravo as páginas utilizadas																		
 							rewind(arqArvore);
 							fseek(arqArvore, (p->rrn-1)*sizeof(pagina), SEEK_SET);
 							fwrite(p, sizeof(pagina), 1, arqArvore);
+							
 							rewind(arqArvore);
 							fseek(arqArvore, (nova->rrn-1)*sizeof(pagina), SEEK_SET);
 							fwrite(nova, sizeof(pagina), 1, arqArvore);
-							//rewind(arqArvore);
-							//fseek(arqArvore, (novaRaiz->rrn-1)*sizeof(pagina), SEEK_SET);
+
 							fseek(arqArvore, 0, SEEK_END);
 							fwrite(novaRaiz, sizeof(pagina), 1, arqArvore);
-						
-							rrnCount++;	
+							
+							//agora a raiz é a nova pagina criada							
 							rrnraiz=novaRaiz->rrn;
-							//printf("novaraiz = %d", rrnraiz);
 							promocao = false;
+							
+						//Se o pai existe
 						} else {
+							
 							rewind(arqArvore);
 							fseek(arqArvore, (p->pai-1)*sizeof(pagina), SEEK_SET);
 							pagina* auxPai = malloc(sizeof(pagina));
 							fread(auxPai, sizeof(pagina), 1, arqArvore);
+							
+							//Se o pai tem lugar sobrando
 							if(auxPai->qtdKeys != MAX_KEYS){
 								for(i=0;i<MAX_KEYS;i++){
 									//encontro lugar em branco
 									if(auxPai->keys[i].key == -1){
 										auxPai->qtdKeys++;
 										auxPai->keys[i].key = promoteKey;
-										auxPai->keys[i].byteoffset = promoteByte;
-										
-										
+										auxPai->keys[i].byteoffset = promoteByte;																				
 										auxPai->keys[i].esq = p->rrn;
 										auxPai->keys[i].dir = nova->rrn;
 										ordenaChaves(auxPai);
 										
+										//arrumo a ordenação
 										for(i=0;i<MAX_KEYS;i++){
 											if(auxPai->keys[i].key > promoteKey){
 												auxPai->keys[i].esq = nova->rrn;
@@ -649,54 +478,35 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 										rewind(arqArvore);
 										fseek(arqArvore, (p->rrn-1)*sizeof(pagina), SEEK_SET);										
 										fwrite(p, sizeof(pagina), 1, arqArvore);
-										fseek(arqArvore, 0, SEEK_END);
+										
+										rewind(arqArvore);
+										fseek(arqArvore, (nova->rrn-1)*sizeof(pagina), SEEK_SET);
 										fwrite(nova, sizeof(pagina), 1, arqArvore);
 										break;
-										//return;
 									}
 								}
 								promocao = false;
-							} else {
-								//while(promocao){
-									//apontadoPor = p->pai;
-									//id2 = promoteKey;
-									//byteoffset = promoteByte;
-									
-									//a pagina mesmo assim recebe o pai
-									//p->pai = auxPai->rrn;
-									//nova->pai = auxPai->rrn;
-									
-									//goto promo;
+								
+							//Se o pai não tem lugar, preciso criar nova raiz...
+							} else {	
+									//Pagina auxiliar para ordenar a pagina							
 									paginaAuxiliar *aux2 = malloc(sizeof(paginaAuxiliar));
-									aux2->keys[0].key = auxPai->keys[0].key;
-									aux2->keys[1].key = auxPai->keys[1].key;
-									aux2->keys[2].key = auxPai->keys[2].key;
-									aux2->keys[3].key = auxPai->keys[3].key;
-									aux2->keys[4].key = promoteKey;
 									
-									aux2->keys[0].byteoffset = auxPai->keys[0].byteoffset;
-									aux2->keys[1].byteoffset = auxPai->keys[1].byteoffset;
-									aux2->keys[2].byteoffset = auxPai->keys[2].byteoffset;
-									aux2->keys[3].byteoffset = auxPai->keys[3].byteoffset;
+									for(i=0;i<MAX_KEYS;i++){
+										aux2->keys[i].key = auxPai->keys[i].key;
+										aux2->keys[i].byteoffset = auxPai->keys[i].byteoffset;
+										aux2->keys[i].esq = auxPai->keys[i].esq;
+										aux2->keys[i].dir = auxPai->keys[i].dir;
+									}									
+									aux2->keys[4].key = promoteKey;																		
 									aux2->keys[4].byteoffset = promoteByte;
-									
-									aux2->keys[0].esq = auxPai->keys[0].esq;
-									aux2->keys[1].esq = auxPai->keys[1].esq;
-									aux2->keys[2].esq = auxPai->keys[2].esq;
-									aux2->keys[3].esq = auxPai->keys[3].esq;
 									aux2->keys[4].esq = -1;
-									
-									aux2->keys[0].dir = auxPai->keys[0].dir;
-									aux2->keys[1].dir = auxPai->keys[1].dir;
-									aux2->keys[2].dir = auxPai->keys[2].dir;
-									aux2->keys[3].dir = auxPai->keys[3].dir;
 									aux2->keys[4].dir = -1;
-									
-									aux2->rrn = 0;
 									aux2->qtdKeys = 5;
+									
+									aux2->rrn = 0;									
 									aux2->pai = -2;
-									
-									
+																		
 									//antes de ordenar ja seto onde o promote key inicial deveria apontar
 									aux2->keys[4].esq = p->rrn;
 									aux2->keys[4].dir = nova->rrn;
@@ -708,64 +518,33 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 											aux2->keys[i].esq = nova->rrn;
 											break;
 										} 
-									}//aparentemente OK ATE AQUI
-									
-									printf("\nRRN: %d", aux2->rrn);
-									printf("\nChaves: ");
-									for(i=0;i<aux2->qtdKeys;i++){
-										printf("%i | ", aux2->keys[i].key);
 									}
-									printf("\nOffsets: ");
-									for(i=0;i<aux2->qtdKeys;i++){
-										printf("%d | ", aux2->keys[i].byteoffset);
-									}
-									printf("\nValores Apontados pela Pagina: ");
-									for(i=0;i<MAX_KEYS+1;i++){
-										//if(i==0)
-											printf("%d | ", aux2->keys[i].esq);
-										printf("%d | ", aux2->keys[i].dir);
-									}
-									printf("\n");
-									getch();
 									
-									//ate aqui esta certo
-									
+									//Crio uma nova pagina que sera a q divide o pai que nao tinha espaço
 									pagina *nova2 = malloc(sizeof(pagina));
+																		
+									inicializaPagina(nova2);
 									nova2->rrn = rrnCount;						
-									nova2->qtdKeys = 0;	
-									nova2->pai = -2;
 									rrnCount++;	
 									
-									for(i=0; i<MAX_KEYS; i++){					
-										nova2->keys[i].key = -1;
-										nova2->keys[i].byteoffset = -1;
-										
-										nova2->keys[i].esq = -1;
-										nova2->keys[i].dir = -1;
+									//Retiro chaves que nao fazem mais parte da pagina pai (que era a raiz que nao tinha espaço)
+									auxPai->qtdKeys = 2;									
+									for(i=2;i<4;i++){
+										auxPai->keys[i].key = -1;									
+										auxPai->keys[i].byteoffset = -1;									
+										auxPai->keys[i].esq = -1;
+										auxPai->keys[i].dir = -1;
 									}
 									
+									//seto novos valores
+									for(i=0;i<2;i++){
+										auxPai->keys[i].key = aux2->keys[i].key;
+										auxPai->keys[i].byteoffset = aux2->keys[i].byteoffset;
+										auxPai->keys[i].esq = aux2->keys[i].esq;
+										auxPai->keys[i].dir = aux2->keys[i].dir;
+									}
 									
-									auxPai->qtdKeys = 2;
-									
-									auxPai->keys[2].key = -1;
-									auxPai->keys[3].key = -1;
-									auxPai->keys[2].byteoffset = -1;
-									auxPai->keys[3].byteoffset = -1;
-									auxPai->keys[2].esq = -1;
-									auxPai->keys[2].dir = -1;
-									auxPai->keys[3].esq = -1;
-									auxPai->keys[3].dir = -1;
-									
-									auxPai->keys[0].key = aux2->keys[0].key;
-									auxPai->keys[1].key = aux2->keys[1].key;
-									auxPai->keys[0].byteoffset = aux2->keys[0].byteoffset;
-									auxPai->keys[1].byteoffset = aux2->keys[1].byteoffset;
-									auxPai->keys[0].esq = aux2->keys[0].esq;
-									auxPai->keys[0].dir = aux2->keys[0].dir;
-									auxPai->keys[1].esq = aux2->keys[1].esq;
-									auxPai->keys[1].dir = aux2->keys[1].esq;
-									
-															
+									//nova pagina 2 recebe novas chaves						
 									nova2->qtdKeys = 2;
 									nova2->keys[0].key = aux2->keys[3].key;
 									nova2->keys[1].key = aux2->keys[4].key;
@@ -776,13 +555,10 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 									nova2->keys[1].esq = aux2->keys[4].esq;
 									nova2->keys[1].dir = aux2->keys[4].dir;
 									
-									//aqui verificar se funciona para todas
-									
-									//nova2->keys[]
-									//nova->pai = nova2->rrn
-																		
+									//Se a chave que estava sendo promovida é igual a chave que sera promovida,
+									//preciso verificar para setar os valores dos pais e filhos 			
 									if(promoteKey!=aux2->keys[2].key){
-										if(auxPai->keys[0].key == promoteKey)	{
+										if(auxPai->keys[0].key == promoteKey){
 											p->pai = auxPai -> rrn;
 											nova->pai = auxPai->rrn;							
 											auxPai->keys[0].esq = p->rrn;
@@ -795,7 +571,6 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 											auxPai->keys[1].esq = p->rrn;
 											auxPai->keys[1].dir = nova->rrn;
 											auxPai->keys[0].dir = p->rrn;
-											//auxPai->keys[1].dir = nova->rrn;
 										} else if(nova2->keys[0].key == promoteKey){
 											p->pai = nova2->rrn;
 											nova->pai = nova2->rrn;
@@ -813,109 +588,24 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 									} else {
 										p->pai = auxPai->rrn;
 										nova->pai = nova2->rrn;
-										auxPai->keys[3].dir = p->rrn;
+										auxPai->keys[1].dir = p->rrn;
 										nova2->keys[0].esq = nova->rrn;
 									}
-									
-									/*for()
-									pagina *filhoAtualiza = malloc(sizeof(pagina));
-									rewind(arqArvore)
-									fread(filhoAtualiza, (auxPai->keys[])sizeof(pagina), 1, arqArvore);*/
-									
+
 									promoteKey = aux2->keys[2].key;
 									promoteByte = aux2->keys[2].byteoffset;
-									
-									//p->pai = auxPai->rrn;
-									//nova->pai = auxPai->rrn;
-									
-									printf("\nRRN nova: %d", nova->rrn);
-									printf("\nChaves: ");
-									for(i=0;i<nova->qtdKeys;i++){
-										printf("%i | ", nova->keys[i].key);
-									}
-									printf("\nOffsets: ");
-									for(i=0;i<nova->qtdKeys;i++){
-										printf("%d | ", nova->keys[i].byteoffset);
-									}
-									printf("\nValores Apontados pela Pagina: ");
-									for(i=0;i<MAX_KEYS;i++){
-										//if(i==0)
-											printf("%d | ", nova->keys[i].esq);
-										printf("%d | ", nova->keys[i].dir);
-									}
-									printf("\n");
-									getch();
-									
-									printf("\nRRN p: %d", p->rrn);
-									printf("\nChaves: ");
-									for(i=0;i<p->qtdKeys;i++){
-										printf("%i | ", p->keys[i].key);
-									}
-									printf("\nOffsets: ");
-									for(i=0;i<p->qtdKeys;i++){
-										printf("%d | ", p->keys[i].byteoffset);
-									}
-									printf("\nValores Apontados pela Pagina: ");
-									for(i=0;i<MAX_KEYS;i++){
-										//if(i==0)
-											printf("%d | ", p->keys[i].esq);
-										printf("%d | ", p->keys[i].dir);
-									}
-									printf("\n");
-									getch();
-									
-									printf("\nRRN auxpai: %d", auxPai->rrn);
-									printf("\nChaves: ");
-									for(i=0;i<auxPai->qtdKeys;i++){
-										printf("%i | ", auxPai->keys[i].key);
-									}
-									printf("\nOffsets: ");
-									for(i=0;i<auxPai->qtdKeys;i++){
-										printf("%d | ", auxPai->keys[i].byteoffset);
-									}
-									printf("\nValores Apontados pela Pagina: ");
-									for(i=0;i<MAX_KEYS;i++){
-										//if(i==0)
-											printf("%d | ", auxPai->keys[i].esq);
-										printf("%d | ", auxPai->keys[i].dir);
-									}
-									printf("\n");
-									getch();
-									
-									printf("\nRRN nova2: %d", nova2->rrn);
-									printf("\nChaves: ");
-									for(i=0;i<nova2->qtdKeys;i++){
-										printf("%i | ",nova2->keys[i].key);
-									}
-									printf("\nOffsets: ");
-									for(i=0;i<nova2->qtdKeys;i++){
-										printf("%d | ", nova2->keys[i].byteoffset);
-									}
-									printf("\nValores Apontados pela Pagina: ");
-									for(i=0;i<MAX_KEYS;i++){
-										//if(i==0)
-											printf("%d | ", nova2->keys[i].esq);
-										printf("%d | ", nova2->keys[i].dir);
-									}
-									printf("\n");
-									getch();
-									
+
 									rewind(arqArvore);
 									fseek(arqArvore, (p->rrn-1)*sizeof(pagina), SEEK_SET);										
 									fwrite(p, sizeof(pagina), 1, arqArvore);
 									
-									fseek(arqArvore, 0, SEEK_END);
+									rewind(arqArvore);
+									fseek(arqArvore, (nova->rrn-1)*sizeof(pagina), SEEK_END);
 									fwrite(nova, sizeof(pagina), 1, arqArvore);
-									
-									/*rewind(arqArvore);
-									fseek(arqArvore, (auxPai->rrn-1)*sizeof(pagina), SEEK_SET);										
-									fwrite(auxPai, sizeof(pagina), 1, arqArvore);
-									
-									fseek(arqArvore, 0, SEEK_END);
-									fwrite(nova2, sizeof(pagina), 1, arqArvore);*/
-									
+
 									for(i=0;i<MAX_KEYS;i++){
 										p->keys[i].key = auxPai->keys[i].key;
+										p->keys[i].byteoffset = auxPai->keys[i].byteoffset;
 										p->keys[i].esq = auxPai->keys[i].esq;
 										p->keys[i].dir = auxPai->keys[i].dir;
 									}
@@ -925,6 +615,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 									
 									for(i=0;i<MAX_KEYS;i++){
 										nova->keys[i].key = nova2->keys[i].key;
+										nova->keys[i].byteoffset = nova2->keys[i].byteoffset;
 										nova->keys[i].esq = nova2->keys[i].esq;
 										nova->keys[i].dir = nova2->keys[i].dir;
 									}
@@ -933,26 +624,16 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 									nova->qtdKeys = nova2->qtdKeys;
 									
 									goto promo;
-									//if()
-									
-								//}
-							}
-							
+							}							
 						}						
 					}//fim while
 				}//fim else
-				
-				
+			//Desce enquanto tem filho		
 			} else{
-				insereChave(arqArvore, id2, byteoffset, filhoQuero);				
+				insereChave(arqArvore, id, byteoffset, filhoQuero);				
 			}
 	}
 
-	//for(i=0;i<MAX_KEYS;i++){
-		//printf("\n\nrrnpagina = %d, quantdKey = %i, \nkey = %i \nbyteoffset = %d \nfilha numero %i = %d", p->rrn, p->qtdKeys, p->keys[i].key, p->keys[i].byteoffset,i, p->child[i]);
-		//getch();
-	//}
-	
 }
 
 void ordenaChaves(pagina *p){
@@ -974,9 +655,7 @@ void ordenaChaves(pagina *p){
                   auxbyteoffset = p->keys[j].byteoffset;
                   p->keys[j].byteoffset = p->keys[j - 1].byteoffset;
                   p->keys[j -1].byteoffset = auxbyteoffset;
-                  
-                  
-                  
+                                  
                   auxEsq = p->keys[j].esq;
                   p->keys[j].esq = p->keys[j-1].esq;
                   p->keys[j-1].esq = auxEsq;
@@ -1040,11 +719,7 @@ void criaArvore(FILE* arqReg, FILE* arqArvore){
 	char id[2];
 	int id2;
 	short byteoffset = 0;
-	short aux =0;
-	int i;
 
-	//rewind(arqArvore);
-	//fwrite(&raiz, sizeof(raiz), 1, arqArvore);
 	rewind(arqReg);
 	rec_length = obterRegistro(arqReg, strBuffer);
 	
@@ -1053,28 +728,21 @@ void criaArvore(FILE* arqReg, FILE* arqArvore){
 		id[1] = strBuffer[1]; 
 		id2 = atoi(id);
 
-		//rewind(arqArvore);
-		//fread(&aux, sizeof(raiz) ,1, arqArvore);
-		
-		//insereChave(arqArvore, id2, byteoffset, aux);
 		insereChave(arqArvore, id2, byteoffset, rrnraiz);
 		byteoffset = byteoffset + rec_length +2;
-		byte = byteoffset;	
+		byte = byteoffset;	//para insercao externa
 		rec_length = obterRegistro(arqReg, strBuffer);
-	}
-		
-	
+	}			
 }
 
 void listaArvoreB(FILE* arqArvore){
 	int i;
-	short rec_length;
 	pagina *p = malloc(sizeof(pagina));
 	rewind(arqArvore);
 	fread(p, sizeof(pagina), 1, arqArvore);
 	while(feof(arqArvore) == 0){
 		if(p->rrn == rrnraiz)
-			printf("\n\n-----Pagina Raiz-----");
+			printf("\n-----Pagina Raiz-----");
 		printf("\nRRN: %d | Pai: %d | Qtd chaves: %i", p->rrn, p->pai, p->qtdKeys);
 		printf("\nChaves: ");
 		for(i=0;i<MAX_KEYS;i++){
@@ -1090,23 +758,19 @@ void listaArvoreB(FILE* arqArvore){
 				printf("%d | ", p->keys[i].esq);
 			printf("%d | ", p->keys[i].dir);
 		}
-		/*printf("\nVetor de Filhos: ");
-		for(i=0;i<ORDEM_PAG;i++){
-			printf("%d | ", p->child[i]);
-		}*/
-		
 		printf("\n");
 		fread(p, sizeof(pagina), 1, arqArvore);
 	}
 }
 
-short buscaRegistro(FILE* arqArvore, int id, short filho){
-	//short filho;
+short buscaRegistroArvore(FILE* arqArvore, int id, short filho){
 	int i;
+	
 	rewind(arqArvore);
 	fseek(arqArvore, (filho-1)*sizeof(pagina), SEEK_SET);
 	pagina *p = malloc(sizeof(pagina));
 	fread(p, sizeof(pagina), 1, arqArvore);
+	
 	for(i=0;i<p->qtdKeys;i++){
 		if(p->keys[i].key == id){
 			printf("\n----------------------------------------------------------------");
@@ -1116,30 +780,28 @@ short buscaRegistro(FILE* arqArvore, int id, short filho){
 	}
 	for(i=0;i<p->qtdKeys;i++){
 		if(p->keys[i].key > id){
-			//filho = p->child[i];
 			filho = p->keys[i].esq;
-			//rrnChild = i;
-			return buscaRegistro(arqArvore, id, filho);
+			return buscaRegistroArvore(arqArvore, id, filho);
 		} else{
-			//filho = p->child[i+1];
 			filho = p->keys[i].dir;
 			if(i==p->qtdKeys-1)
-				return buscaRegistro(arqArvore, id, filho);
+				return buscaRegistroArvore(arqArvore, id, filho);
 		}
 	}
 	return;
 }
 
 void listaRegistro(FILE* arqReg, short offset){
-	//pagina *p = malloc(sizeof(pagina));
 	short tam;
 	char reg[512];
 	char *token;
 	int campo = 1;
+	
 	rewind(arqReg);
 	fseek(arqReg, offset, SEEK_SET);
 	fread(&tam, sizeof(tam), 1, arqReg);
     fread(reg, 1 ,tam, arqReg);
+    
 	token = strtok(reg, "|");
 	printf("| Byteoffset: %d | Tamanho do Registro : %i\n", offset, tam);
 	while(token != NULL){

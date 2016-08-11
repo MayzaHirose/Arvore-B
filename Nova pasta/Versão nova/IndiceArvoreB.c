@@ -48,6 +48,7 @@ void listaRegistro(FILE* arqReg, short offset);
 short raiz = -2;
 short rrnCount = 1;
 short rrnraiz = -2;
+short byte=0;
 int promoteKey = 0;
 short promoteByte = 0;
 
@@ -62,6 +63,8 @@ int main(){
 	short rec_length; //Armazena o tamanho do registro
 	char filename[20], strCampo[256], strBuffer[512]; // Strings
 	char* token; //Armazena parte de string ao utilizar strtok
+	char id[2];
+	int id2;
 
 	//Variáveis da Busca Sequencial para procurar o registro a ser removido
 	char searchKey[2]; //ID a ser removido
@@ -156,6 +159,32 @@ int main(){
 				system("cls");	
 					
 			break;
+			
+			case 2:
+				
+					strCampo[0] = '\0';
+		        	strBuffer[0] = '\0';
+	
+		        	//Recebe o novo registro
+		        	receberDados(strBuffer);
+		        	printf("\n\nDados recebidos: %s", strBuffer);
+				//Escrevo o tamanho do registro e o registro no final do arquivo
+		        	fwrite(&tamanhoRegistro, sizeof(tamanhoRegistro), 1, arqReg);
+	        		fwrite(strBuffer, tamanhoRegistro, 1, arqReg);
+	        		
+	        		
+	        		id[0] = strBuffer[0];
+					id[1] = strBuffer[1]; 
+					id2 = atoi(id);
+			
+					//rewind(arqArvore);
+					//fread(&aux, sizeof(raiz) ,1, arqArvore);
+					
+					//insereChave(arqArvore, id2, byteoffset, aux);
+					insereChave(arqArvore, id2, byte, rrnraiz);
+					byte = byte + tamanhoRegistro +2;	
+				        		
+	    	break;
 			
 			case 3:
 	        	printf("\nQual o ID procurado?: ");
@@ -286,6 +315,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 	short pagAtual = 0;
 	short pagVim = 0;
 	int keyAux;
+	short apontadoPor;
 	//short filhoQuero;
 	pagina *p = malloc(sizeof(pagina));
 	if(filhoQuero == -2){
@@ -400,8 +430,9 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 				} else{	
 					//pego e junto a pagina com a chave q eu preciso e vejo se tem q romover ou criar nova raiz
 					promocao = true;
-					
+					promo:
 					while(promocao){
+						
 						paginaAuxiliar *aux = malloc(sizeof(paginaAuxiliar));
 						aux->keys[0].key = p->keys[0].key;
 						aux->keys[1].key = p->keys[1].key;
@@ -562,6 +593,83 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 									}
 								}
 								promocao = false;
+							} else {
+								//while(promocao){
+									apontadoPor = p->pai;
+									id2 = promoteKey;
+									byteoffset = promoteByte;
+									
+									goto promo;
+									/*paginaAuxiliar *aux2 = malloc(sizeof(paginaAuxiliar));
+									aux2->keys[0].key = auxPai->keys[0].key;
+									aux2->keys[1].key = auxPai->keys[1].key;
+									aux2->keys[2].key = auxPai->keys[2].key;
+									aux2->keys[3].key = auxPai->keys[3].key;
+									aux2->keys[4].key = promoteKey;
+									
+									aux2->keys[0].byteoffset = auxPai->keys[0].byteoffset;
+									aux2->keys[1].byteoffset = auxPai->keys[1].byteoffset;
+									aux2->keys[2].byteoffset = auxPai->keys[2].byteoffset;
+									aux2->keys[3].byteoffset = auxPai->keys[3].byteoffset;
+									aux2->keys[4].byteoffset = promoteByte;
+									
+									aux2->keys[0].esq = auxPai->keys[0].esq;
+									aux2->keys[1].esq = auxPai->keys[1].esq;
+									aux2->keys[2].esq = auxPai->keys[2].esq;
+									aux2->keys[3].esq = auxPai->keys[3].esq;
+									aux2->keys[4].esq = -1;
+									
+									aux2->keys[0].dir = auxPai->keys[0].dir;
+									aux2->keys[1].dir = auxPai->keys[1].dir;
+									aux2->keys[2].dir = auxPai->keys[2].dir;
+									aux2->keys[3].dir = auxPai->keys[3].dir;
+									aux2->keys[4].dir = -1;
+									
+									aux2->rrn = 0;
+									aux2->qtdKeys = 5;
+									aux2->pai = -2;
+									for(i=0; i<ORDEM_PAG; i++){	
+										aux2->child[i] = -1;
+									}
+									ordenaChavesAux(aux2);
+									
+									pagina *nova2 = malloc(sizeof(pagina));
+									nova2->rrn = rrnCount;						
+									nova2->qtdKeys = 0;	
+									nova2->pai = -2;
+									rrnCount++;	
+									
+									for(i=0; i<MAX_KEYS; i++){					
+										nova2->keys[i].key = -1;
+										nova2->keys[i].byteoffset = -1;
+										nova2->child[i] = -1;
+										nova2->keys[i].esq = -1;
+										nova2->keys[i].dir = -1;
+									}
+									nova2->child[4] = -1;
+									
+									p->qtdKeys = 2;
+									
+									auxPai->keys[2].key = -1;
+									auxPai->keys[3].key = -1;
+									auxPai->keys[2].byteoffset = -1;
+									auxPai->keys[3].byteoffset = -1;
+									
+									auxPai->keys[0].key = aux2->keys[0].key;
+									auxPai->keys[1].key = aux2->keys[1].key;
+									auxPai->keys[0].byteoffset = aux2->keys[0].byteoffset;
+									auxPai->keys[1].byteoffset = aux2->keys[1].byteoffset;
+									
+															
+									nova2->qtdKeys = 2;
+									nova2->keys[0].key = aux2->keys[3].key;
+									nova2->keys[1].key = aux2->keys[4].key;
+									nova2->keys[0].byteoffset = aux2->keys[3].byteoffset;
+									nova2->keys[1].byteoffset = aux2->keys[4].byteoffset;
+									
+									promoteKey = aux2->keys[2].key;
+									promoteByte = aux2->keys[2].byteoffset;*/
+								//}
 							}
 							
 						}						
@@ -690,7 +798,8 @@ void criaArvore(FILE* arqReg, FILE* arqArvore){
 		
 		//insereChave(arqArvore, id2, byteoffset, aux);
 		insereChave(arqArvore, id2, byteoffset, rrnraiz);
-		byteoffset = byteoffset + rec_length +2;	
+		byteoffset = byteoffset + rec_length +2;
+		byte = byteoffset;	
 		rec_length = obterRegistro(arqReg, strBuffer);
 	}
 		

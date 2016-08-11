@@ -19,6 +19,8 @@ void receberDados(char* strBuffer);
 typedef struct {
 	int key;
 	short byteoffset;
+	short esq;
+	short dir;
 }chave;
 
 typedef struct {
@@ -283,6 +285,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 	bool promocao=false;
 	short pagAtual = 0;
 	short pagVim = 0;
+	int keyAux;
 	//short filhoQuero;
 	pagina *p = malloc(sizeof(pagina));
 	if(filhoQuero == -2){
@@ -295,6 +298,8 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 				p->keys[i].key = -1;
 				p->keys[i].byteoffset = -1;
 				p->child[i] = -1;
+				p->keys[i].esq = -1;
+				p->keys[i].dir = -1;
 			}
 			p->child[4] = -1;
 			//fim inicializacao
@@ -342,11 +347,15 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 			//pego a posição q a chave deveria estar
 			for(i=0;i<p->qtdKeys;i++){
 				if(p->keys[i].key > id2){
-					filhoQuero = p->child[i];
+					//filhoQuero = p->child[i];
+					filhoQuero = p->keys[i].esq;
 					rrnChild = i;
+					keyAux = p->keys[i].key;
 					break;
 				} else{
-					filhoQuero = p->child[i+1];
+					//filhoQuero = p->child[i+1];
+					filhoQuero = p->keys[i].dir;
+					rrnChild = i;
 				}
 			}
 			
@@ -406,6 +415,18 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 						aux->keys[3].byteoffset = p->keys[3].byteoffset;
 						aux->keys[4].byteoffset = byteoffset;
 						
+						aux->keys[0].esq = p->keys[0].esq;
+						aux->keys[1].esq = p->keys[1].esq;
+						aux->keys[2].esq = p->keys[2].esq;
+						aux->keys[3].esq = p->keys[3].esq;
+						aux->keys[4].esq = -1;
+						
+						aux->keys[0].dir = p->keys[0].dir;
+						aux->keys[1].dir = p->keys[1].dir;
+						aux->keys[2].dir = p->keys[2].dir;
+						aux->keys[3].dir = p->keys[3].dir;
+						aux->keys[4].dir = -1;
+						
 						aux->rrn = 0;
 						aux->qtdKeys = 5;
 						aux->pai = -2;
@@ -424,6 +445,8 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 							nova->keys[i].key = -1;
 							nova->keys[i].byteoffset = -1;
 							nova->child[i] = -1;
+							nova->keys[i].esq = -1;
+							nova->keys[i].dir = -1;
 						}
 						nova->child[4] = -1;
 						
@@ -469,7 +492,8 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 								novaRaiz->keys[i].key = -1;
 								novaRaiz->keys[i].byteoffset = -1;
 								novaRaiz->child[i] = -1;
-								
+								novaRaiz->keys[i].esq = -1;
+								novaRaiz->keys[i].dir = -1;
 							}
 							novaRaiz->child[4] = -1;
 							//fim inicializa
@@ -481,6 +505,8 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 							
 							novaRaiz->child[0] = p->rrn;
 							novaRaiz->child[1] = nova->rrn;
+							novaRaiz->keys[0].esq = p->rrn;
+							novaRaiz->keys[0].dir = nova->rrn;
 							
 							p->pai = novaRaiz->rrn;
 							nova->pai = novaRaiz->rrn;
@@ -507,7 +533,17 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 										auxPai->keys[i].byteoffset = promoteByte;
 										auxPai->child[i] = p->rrn;
 										auxPai->child[i+1] = nova->rrn;
+										
+										auxPai->keys[i].esq = p->rrn;
+										auxPai->keys[i].dir = nova->rrn;
 										ordenaChaves(auxPai);
+										
+										for(i=0;i<MAX_KEYS;i++){
+											if(auxPai->keys[i].key > promoteKey){
+												auxPai->keys[i].esq = nova->rrn;
+												break;
+											} 
+										}
 										
 										rewind(arqArvore);
 										fseek(arqArvore, (p->pai-1)*sizeof(pagina), SEEK_SET);
@@ -547,7 +583,7 @@ void insereChave(FILE * arqArvore, int id2, short byteoffset, short filhoQuero){
 
 void ordenaChaves(pagina *p){
 	int i, j, aux;
-	short auxbyteoffset, auxChild;
+	short auxbyteoffset, auxChild, auxEsq, auxDir;
 	int valores[p->qtdKeys];
 	
 	for(i=0;i<p->qtdKeys;i++){
@@ -569,6 +605,14 @@ void ordenaChaves(pagina *p){
                   p->child[j] = p->child[j - 1];
                   p->child[j -1] = auxChild;
                   
+                  auxEsq = p->keys[j].esq;
+                  p->keys[j].esq = p->keys[j-1].esq;
+                  p->keys[j-1].esq = auxEsq;
+                  
+                  auxDir = p->keys[j].dir;
+                  p->keys[j].dir = p->keys[j-1].dir;
+                  p->keys[j-1].dir = auxDir;
+                  
                   j--;
                   
             }
@@ -581,7 +625,7 @@ void ordenaChaves(pagina *p){
 
 void ordenaChavesAux(paginaAuxiliar *p){
 	int i, j, aux;
-	short auxbyteoffset;
+	short auxbyteoffset, auxChild, auxEsq, auxDir;
 	int valores[p->qtdKeys];
 	
 	for(i=0;i<p->qtdKeys;i++){
@@ -594,14 +638,28 @@ void ordenaChavesAux(paginaAuxiliar *p){
                   aux = valores[j];
                   valores[j] = valores[j - 1];
                   valores[j - 1] = aux;
+                  
                   auxbyteoffset = p->keys[j].byteoffset;
                   p->keys[j].byteoffset = p->keys[j - 1].byteoffset;
                   p->keys[j -1].byteoffset = auxbyteoffset;
+                  
+                  auxChild = p->child[j];
+                  p->child[j] = p->child[j - 1];
+                  p->child[j -1] = auxChild;
+                  
+                  auxEsq = p->keys[j].esq;
+                  p->keys[j].esq = p->keys[j-1].esq;
+                  p->keys[j-1].esq = auxEsq;
+                  
+                  auxDir = p->keys[j].dir;
+                  p->keys[j].dir = p->keys[j-1].dir;
+                  p->keys[j-1].dir = auxDir;
                   
                   j--;
                   
             }
       }
+      
       
     for(i=0;i<p->qtdKeys;i++){
 		p->keys[i].key = valores[i];
@@ -653,6 +711,12 @@ void listaArvoreB(FILE* arqArvore){
 		for(i=0;i<MAX_KEYS;i++){
 			printf("%i | ", p->keys[i].key);
 		}
+		printf("\nValores Apontados pela Pagina: ");
+		for(i=0;i<MAX_KEYS;i++){
+			if(i==0)
+				printf("%d | ", p->keys[i].esq);
+			printf("%d | ", p->keys[i].dir);
+		}
 		printf("\nOffsets: ");
 		for(i=0;i<MAX_KEYS;i++){
 			printf("%d | ", p->keys[i].byteoffset);
@@ -661,6 +725,7 @@ void listaArvoreB(FILE* arqArvore){
 		for(i=0;i<ORDEM_PAG;i++){
 			printf("%d | ", p->child[i]);
 		}
+		
 		printf("\n");
 		fread(p, sizeof(pagina), 1, arqArvore);
 	}
@@ -674,7 +739,6 @@ short buscaRegistro(FILE* arqArvore, int id, short filho){
 	pagina *p = malloc(sizeof(pagina));
 	fread(p, sizeof(pagina), 1, arqArvore);
 	for(i=0;i<p->qtdKeys;i++){
-		//encontro lugar em branco
 		if(p->keys[i].key == id){
 			printf("\n----------------------------------------------------------------");
 			printf("\nEsta na pagina: %d ", p->rrn);						
@@ -683,11 +747,13 @@ short buscaRegistro(FILE* arqArvore, int id, short filho){
 	}
 	for(i=0;i<p->qtdKeys;i++){
 		if(p->keys[i].key > id){
-			filho = p->child[i];
+			//filho = p->child[i];
+			filho = p->keys[i].esq;
 			//rrnChild = i;
 			return buscaRegistro(arqArvore, id, filho);
 		} else{
-			filho = p->child[i+1];
+			//filho = p->child[i+1];
+			filho = p->keys[i].dir;
 			if(i==p->qtdKeys-1)
 				return buscaRegistro(arqArvore, id, filho);
 		}
